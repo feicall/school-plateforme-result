@@ -1,0 +1,82 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mysql"
+  url      = env("DATABASE_URL")
+}
+
+enum Role {
+  ADMIN
+  ENSEIGNANT
+  PARENT
+}
+
+model Utilisateur {
+  id           Int                          @id @default(autoincrement())
+  nom          String
+  email        String                       @unique
+  mot_de_passe String
+  role         Role                         @default(PARENT)
+  eleves       Eleve[]                      @relation("ParentEleves")
+  notes        Note[]                       @relation("EnseignantNotes")
+  affectations AffectationClasseEnseignant[]
+  createdAt    DateTime                     @default(now())
+  updatedAt    DateTime                     @updatedAt
+}
+
+model Eleve {
+  id            Int      @id @default(autoincrement())
+  nom           String
+  dateNaissance DateTime
+  classe        Classe   @relation(fields: [classeId], references: [id])
+  classeId      Int
+  parent        Utilisateur @relation("ParentEleves", fields: [parentId], references: [id])
+  parentId      Int
+  notes         Note[]
+}
+
+model Classe {
+  id           Int                          @id @default(autoincrement())
+  nom          String
+  eleves       Eleve[]
+  affectations AffectationClasseEnseignant[]
+}
+
+model Matiere {
+  id           Int                          @id @default(autoincrement())
+  nom          String
+  notes        Note[]
+  affectations AffectationClasseEnseignant[]
+}
+
+model Periode {
+  id      Int     @id @default(autoincrement())
+  libelle String
+  notes   Note[]
+}
+
+model Note {
+  id           Int          @id @default(autoincrement())
+  eleve        Eleve        @relation(fields: [eleveId], references: [id])
+  eleveId      Int
+  matiere      Matiere      @relation(fields: [matiereId], references: [id])
+  matiereId    Int
+  periode      Periode      @relation(fields: [periodeId], references: [id])
+  periodeId    Int
+  enseignant   Utilisateur  @relation("EnseignantNotes", fields: [enseignantId], references: [id])
+  enseignantId Int
+  note         Float
+  createdAt    DateTime     @default(now())
+}
+
+model AffectationClasseEnseignant {
+  id           Int         @id @default(autoincrement())
+  enseignant   Utilisateur @relation(fields: [enseignantId], references: [id])
+  enseignantId Int
+  classe       Classe      @relation(fields: [classeId], references: [id])
+  classeId     Int
+  matiere      Matiere     @relation(fields: [matiereId], references: [id])
+  matiereId    Int
+}
